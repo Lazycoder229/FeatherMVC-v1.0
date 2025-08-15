@@ -39,8 +39,81 @@ export const ${Name} = {
 `
 };
 
+// ---------- AUTH TEMPLATES ----------
+const jwtControllerTemplate = `import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
+import config from "../config/auth.js";
+
+export default {
+  async login(req, res) {
+    const { username, password } = req.body;
+    const user = { id: 1, username: "admin", passwordHash: await bcrypt.hash("password", 10) };
+
+    const match = await bcrypt.compare(password, user.passwordHash);
+    if (!match) return res.status(401).json({ message: "Invalid credentials" });
+
+    const token = jwt.sign({ id: user.id, username: user.username }, config.jwtSecret, { expiresIn: config.jwtExpiresIn });
+    res.json({ token });
+  },
+
+  async register(req, res) {
+    if (!config.allowRegistration) return res.status(403).json({ message: "Registration disabled" });
+    res.json({ message: "User registered (example)" });
+  }
+};
+`;
+
+const jwtMiddlewareTemplate = `import jwt from "jsonwebtoken";
+import config from "../config/auth.js";
+
+export default function (req, res, next) {
+  const token = req.headers.authorization?.split(" ")[1];
+  if (!token) return res.status(401).json({ message: "No token" });
+  try {
+    req.user = jwt.verify(token, config.jwtSecret);
+    next();
+  } catch {
+    res.status(403).json({ message: "Invalid token" });
+  }
+}
+`;
+
+const sessionControllerTemplate = `export default {
+  async login(req, res) {
+    const { username, password } = req.body;
+    if (username === "admin" && password === "password") {
+      req.session.user = { id: 1, username };
+      res.json({ message: "Logged in" });
+    } else {
+      res.status(401).json({ message: "Invalid credentials" });
+    }
+  },
+  async logout(req, res) {
+    req.session.destroy(() => res.json({ message: "Logged out" }));
+  }
+};
+`;
+
+const sessionMiddlewareTemplate = `export default function (req, res, next) {
+  if (!req.session.user) return res.status(401).json({ message: "Not logged in" });
+  next();
+}
+`;
+
+const authRouteTemplate = `import { Router } from "express";
+import AuthController from "../controllers/AuthController.js";
+
+const router = Router();
+router.post("/login", AuthController.login);
+router.post("/register", AuthController.register || ((req,res)=>res.status(404).end()));
+router.post("/logout", AuthController.logout || ((req,res)=>res.status(404).end()));
+
+export default router;
+`;
+// ------------------------------------
+
 if (!cmd) {
-  console.log('Usage: feather <make:controller|make:model|make:route|make:page|run> <Name>');
+  console.log('Usage: feather <make:controller|make:model|make:route|make:page|make:auth|run> <Name>');
   process.exit(1);
 }
 
@@ -73,25 +146,21 @@ switch (cmd) {
     const n = (name || 'sample').toLowerCase();
     const Name = capitalize(n);
 
-    // 1. Create JS page instead of HTML
     const pagePath = path.join('src', 'views', 'pages', `${n}.js`);
     ensure(path.dirname(pagePath));
     writeFileSync(pagePath, templates.page(n));
     console.log('✅ Created', pagePath);
 
-    // 2. Create controller
     const ctrlPath = path.join('src', 'controllers', `${Name}Controller.js`);
     ensure(path.dirname(ctrlPath));
     writeFileSync(ctrlPath, templates.controller(Name));
     console.log('✅ Created', ctrlPath);
 
-    // 3. Create route
     const routePath = path.join('src', 'routes', `${n}.js`);
     ensure(path.dirname(routePath));
     writeFileSync(routePath, templates.route(n));
     console.log('✅ Created', routePath);
 
-    // 4. Auto-register in routes/index.js
     const indexPath = path.join('src', 'routes', 'index.js');
     if (existsSync(indexPath)) {
       let content = readFileSync(indexPath, 'utf8');
@@ -111,6 +180,53 @@ switch (cmd) {
     }
     break;
   }
+  case 'make:auth': {
+    const type = (name || 'jwt').toLowerCase();
+    ensure(path.join('src', 'controllers'));
+    ensure(path.join('src', 'routes'));
+    ensure(path.join('src', 'middleware'));
+    ensure(path.join('src', 'config'));
+
+    const configPath = path.join('src', 'config', 'auth.js');
+    const configContent = `export default {
+  method: "${type}",
+  jwtSecret: process.env.JWT_SECRET || "changeme",
+  jwtExpiresIn: "1h",
+  sessionSecret: process.env.SESSION_SECRET || "changeme",
+  allowRegistration: true
+};
+`;
+    writeFileSync(configPath, configContent);
+    console.log('✅ Created', configPath);
+
+    const ctrlPath = path.join('src', 'controllers', 'AuthController.js');
+    writeFileSync(ctrlPath, type === 'jwt' ? jwtControllerTemplate : sessionControllerTemplate);
+    console.log('✅ Created', ctrlPath);
+
+    const mwPath = path.join('src', 'middleware', 'authMiddleware.js');
+    writeFileSync(mwPath, type === 'jwt' ? jwtMiddlewareTemplate : sessionMiddlewareTemplate);
+    console.log('✅ Created', mwPath);
+
+    const routePath = path.join('src', 'routes', 'auth.js');
+    writeFileSync(routePath, authRouteTemplate);
+    console.log('✅ Created', routePath);
+
+    const indexPath = path.join('src', 'routes', 'index.js');
+    if (existsSync(indexPath)) {
+      let content = readFileSync(indexPath, 'utf8');
+      const importLine = `import authRoutes from './auth.js';`;
+      const useLine = `router.use('/auth', authRoutes);`;
+      if (!content.includes(importLine)) {
+        content = importLine + '\n' + content;
+      }
+      if (!content.includes(useLine)) {
+        content = content.replace(/(export default router;)/, `${useLine}\n$1`);
+      }
+      writeFileSync(indexPath, content);
+      console.log('🔗 Added auth routes to index.js');
+    }
+    break;
+  }
   case 'run': {
     const target = name || 'dev';
     if (target === 'dev') {
@@ -126,16 +242,18 @@ switch (cmd) {
   default: {
     console.log(`
 Feather CLI Commands:
-  make:page <name>   → Create JS page, controller, route, and auto-register
-  make:controller    → Create only a controller
-  make:model         → Create a model
-  make:route         → Create a route
-  run dev            → Run development server using nodemon
-  help               → Show this help message
+  make:page <name>       → Create page, controller, route, auto-register
+  make:controller <name> → Create only a controller
+  make:model <name>      → Create a model
+  make:route <name>      → Create a route
+  make:auth [jwt|session]→ Create auth scaffold
+  run dev                → Run dev server using nodemon
+  help                   → Show this help
 
 Examples:
   feather make:page about
   feather make:controller blog
+  feather make:auth jwt
   feather run dev
     `);
   }

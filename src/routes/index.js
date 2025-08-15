@@ -34,4 +34,5 @@ router.use('/feature', featureRoutes);
 
 
 router.use('/blog', blogRoutes);
+
 export default router;

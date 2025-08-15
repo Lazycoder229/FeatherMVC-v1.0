@@ -1,5 +1,10 @@
 import { Router } from 'express';
 import Ctrl from '../controllers/BlogController.js';
+ // make sure this path is correct
+
 const router = Router();
-router.get('/', Ctrl.index);
+
+// This route now requires a valid JWT
+router.get('/',Ctrl.index);
+
 export default router;
