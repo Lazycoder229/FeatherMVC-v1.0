@@ -94,5 +94,3 @@ npm run dev
 # visit http://localhost:3000
 ```
 
->>>>>>> b040b1e (Initial commit: FeatherMVC project)
->>>>>>> d0cdb2a (Initial commit: FeatherMVC project)
