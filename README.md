@@ -1,3 +1,10 @@
+<<<<<<< HEAD
+=======
+
+# FeatherMVC-v1.0
+Experience a modern, lightweight MVC framework powered by Express, MySQL, and pure HTML/CSS/Tailwind/JavaScript.
+=======
+>>>>>>> d0cdb2a (Initial commit: FeatherMVC project)
 # LiteMVC-Express
 
 Minimal MVC framework on Node.js (Express) + MySQL with plain HTML/CSS/JS.
@@ -47,7 +54,7 @@ FeatherMVC CLI Commands:
 
 Example:
 ```bash
-feathermvc:page blog
+feather make:page blog
 ```
 
 ## Add a new package
@@ -86,3 +93,6 @@ npm run migrate
 npm run dev
 # visit http://localhost:3000
 ```
+
+>>>>>>> b040b1e (Initial commit: FeatherMVC project)
+>>>>>>> d0cdb2a (Initial commit: FeatherMVC project)
