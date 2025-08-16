@@ -1,18 +1,16 @@
 {
-  "name": "mylitemvc-app",
+  "name": "feathermvc-app",
   "version": "1.0.0",
   "type": "module",
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "migrate": "node db/migrate.js",
-    "cli": "node bin/feathermvc.js"
+    "migrate": "node db/migrate.js"
   },
-  "bin": {
-    "feather": "./bin/feathermvc.js"
-  },
+ 
   "dependencies": {
+     "feather-cli": "^1.0.0",
     "bcrypt": "^6.0.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
