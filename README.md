@@ -1,17 +1,18 @@
-
 # FeatherMVC-v1.0
-Experience a modern, lightweight MVC framework powered by Express, MySQL, and pure HTML/CSS/Tailwind/JavaScript.
 
+Experience a modern, lightweight MVC framework powered by Express, MySQL, and pure HTML/CSS/Tailwind/JavaScript.
 
 # FeatherMVC-Express
 
 Minimal MVC framework on Node.js (Express) + MySQL with plain HTML/CSS/JS.
 
 ## Requirements
+
 - Node.js 18+
 - MySQL 8+ (or MariaDB)
 
 ## Installation
+
 ```bash
 npm install
 cp .env.example .env
@@ -21,36 +22,40 @@ cp .env.example .env
 ## Commands
 
 ### Start development server
+
 ```bash
 feather run dev
 ```
+
 Starts with `nodemon` so it restarts on file changes.
 
 ### Start production server
+
 ```bash
 feather start
 ```
 
 ### Run migrations
+
 ```bash
 feather run migrate
 ```
 
 ### CLI (Scaffolding)
+
 ```bash
 feather run cli -- <command> <Name>
 ```
+
 Commands:
 
+#### FeatherMVC CLI Commands:
 
-FeatherMVC CLI Commands:
-- `make:page <name>`   → `Create HTML page, controller, route, and auto-register`
-- `make:controller`    → `Create only a controller`
-  -`make:model`         → `Create a model`
-  -`make:route`         → `Create a route`
-  -`help`               → `Show this help message`
+- `make:page <name>` → `Create HTML page, controller, route, and auto-register`
+- `make:controller` → `Create only a controller` -`make:model` → `Create a model` -`make:route` → `Create a route` -`help` → `Show this help message`
 
 Example:
+
 ```bash
 
 feather make:page blog
@@ -60,15 +65,19 @@ feather make:page blog
 ```
 
 ## Add a new package
+
 ```bash
 npm install package-name
 ```
+
 Or for dev dependency:
+
 ```bash
 npm install -D package-name
 ```
 
 ## Project Structure
+
 ```
 myapp/
 ├─ bin/                # CLI scripts
@@ -87,12 +96,9 @@ myapp/
 ```
 
 ## First Run
+
 ```bash
-npm install
-cp .env.example .env
-# edit .env for DB settings
-npm run migrate
-npm run dev
+
+feather run dev
 # visit http://localhost:3000
 ```
-
